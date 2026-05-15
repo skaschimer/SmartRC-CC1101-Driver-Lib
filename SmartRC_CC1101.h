@@ -1,6 +1,6 @@
 /*
   SmartRC_CC1101.h - Advanced CC1101 module library
-  Version: 3.0.0 (2026 Reboot)
+  Version: 3.0.2 (2026 Reboot)
   Author: Little Satan (SmartRC)
   Based on original work by: Wilson Shen (Elechouse)
 */
@@ -99,6 +99,7 @@
 class SmartRC_CC1101
 {
 private:
+  static bool global_spi_initialized;
   byte modulation = 2;
   byte chan = 0;
   int pa = 12;
@@ -128,7 +129,7 @@ private:
   void setSpi(void);
   void RegConfigSettings(void);
   void Calibrate(void);
-
+  void setSpiPinMode(void);
 public:
   void Init(void);
   byte SpiReadStatus(byte addr);

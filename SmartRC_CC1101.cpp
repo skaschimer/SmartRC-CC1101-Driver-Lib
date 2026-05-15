@@ -1,5 +1,5 @@
 /*
-  SmartRC_CC1101.cpp - Advanced CC1101 module library (V3.0.0)
+  SmartRC_CC1101.cpp - Advanced CC1101 module library (V3.0.2)
 */
 #include "SmartRC_CC1101.h"
 #include <math.h>
@@ -19,6 +19,8 @@ const uint8_t PA_TABLE_433[8]  = {0x12,0x0E,0x1D,0x34,0x60,0x84,0xC8,0xC0};
 const uint8_t PA_TABLE_868[10] = {0x03,0x17,0x1D,0x26,0x37,0x50,0x86,0xCD,0xC5,0xC0};
 const uint8_t PA_TABLE_915[10] = {0x03,0x0E,0x1E,0x27,0x38,0x8E,0x84,0xCC,0xC3,0xC0};
 
+bool SmartRC_CC1101::global_spi_initialized = false;
+
 // --- Global instances ---
 // We create a single object in memory under the new name.
 SmartRC_CC1101 SmartRC_cc1101;
@@ -31,9 +33,15 @@ SmartRC_CC1101& ELECHOUSE_cc1101 = SmartRC_cc1101;
 
 bool SmartRC_CC1101::WaitMiso(uint16_t timeout_ms) {
     uint32_t start = millis();
+    #if defined(ESP32)
+    while (gpio_get_level((gpio_num_t)MISO_PIN)) {
+        if (millis() - start > timeout_ms) return false;
+    }
+    #else
     while (digitalRead(MISO_PIN)) {
         if (millis() - start > timeout_ms) return false;
     }
+    #endif
     return true;
 }
 
@@ -130,10 +138,12 @@ void SmartRC_CC1101::setSpi(void) {
     #else
         SCK_PIN = 13; MISO_PIN = 12; MOSI_PIN = 11; SS_PIN = 10;
     #endif
+	setSpiPinMode();
 }
 
 void SmartRC_CC1101::setSpiPin(byte sck, byte miso, byte mosi, byte ss) {
     SCK_PIN = sck; MISO_PIN = miso; MOSI_PIN = mosi; SS_PIN = ss;
+	setSpiPinMode();
 	custom_spi_pins = true;
 }
 
@@ -150,11 +160,14 @@ void SmartRC_CC1101::setGDO0(byte gdo0) {
 void SmartRC_CC1101::Init(void) {
     setSpi();
     
-    pinMode(SCK_PIN, OUTPUT);
-    pinMode(MOSI_PIN, OUTPUT);
-    pinMode(MISO_PIN, INPUT);
-    pinMode(SS_PIN, OUTPUT);
-
+	#ifdef ESP32
+		if (!global_spi_initialized) {
+			SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, -1);
+			global_spi_initialized = true;
+		}
+		delay(200);
+	#endif
+	
     if (!spi_initialized) {
         #ifdef ESP32
         SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN);
@@ -164,11 +177,23 @@ void SmartRC_CC1101::Init(void) {
         spi_initialized = true;
     }
     digitalWrite(SS_PIN, HIGH);
+    #ifndef ESP32
     digitalWrite(SCK_PIN, HIGH);
     digitalWrite(MOSI_PIN, LOW);
+    #endif
     
     Reset();
     RegConfigSettings();
+}
+
+void SmartRC_CC1101::setSpiPinMode(void) {
+	#ifndef ESP32
+    pinMode(SCK_PIN, OUTPUT);
+    pinMode(MOSI_PIN, OUTPUT);
+    #endif
+    pinMode(MISO_PIN, INPUT);
+    pinMode(SS_PIN, OUTPUT);
+	digitalWrite(SS_PIN, HIGH);
 }
 
 void SmartRC_CC1101::Reset(void) {
