@@ -17,11 +17,14 @@ const byte GDO0_MODUL_2 = 3;
 
 void setup() {
   Serial.begin(9600);
-
-  // --- Configuration Module 1 ---
+  
+  // --- Pin configuration --- 
+  // Important: first set all pins for all CC1101 modules!
   // SCK, MISO, MOSI, SS
   modul1.setSpiPin(13, 12, 11, SS_MODUL_1); 
-  // GDO0
+  modul2.setSpiPin(13, 12, 11, SS_MODUL_2);
+
+  // --- Configuration Module 1 ---
   modul1.setGDO0(GDO0_MODUL_1);           
   
   modul1.Init();
@@ -36,9 +39,7 @@ void setup() {
 
 
   // --- Configuration Modul 2 ---
-  modul2.setSpiPin(13, 12, 11, SS_MODUL_2);
   modul2.setGDO0(GDO0_MODUL_2);
-
   modul2.Init();
   if (!modul2.getCC1101()) {
     Serial.println("ERROR: Modul 2 not found!");
