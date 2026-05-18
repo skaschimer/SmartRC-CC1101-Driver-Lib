@@ -1,6 +1,6 @@
-﻿# SmartRC CC1101 Driver Library (V3.0.2)
+# SmartRC CC1101 Driver Library (V3.0.2)
 
-![Version](https://img.shields.io/badge/Version-3.0.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-3.0.2-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Arduino%20%7C%20ESP8266%20%7C%20ESP32-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-orange.svg)
 
@@ -13,11 +13,8 @@ While the original versions relied on experimental values and global variables, 
 ### Key Technical Improvements:
 
 * **Read-Modify-Write (RMW) Logic:** Instead of mirroring chip states in the microcontroller's RAM, the driver now operates bit-precisely directly on the hardware registers. This saves significant RAM on systems like the Arduino Nano/Uno.
-
 * **Mathematical Precision:** Frequencies, data rates, and bandwidths are now calculated using exact logarithmic formulas, drastically increasing link stability.
-
 * **Object-Oriented Architecture:** Full support for multi-module setups (e.g., Dual-Band Gateways 433/868 MHz) via class instantiation. Old sketches remain 100% compatible via the provided wrapper!
-
 * **Hardware Feedback:** New "Plain-Text" Getters (`getMHZ()`, `getDRate()`, etc.) allow you to verify the actual internal settings of the chip for the first time.
 
 ## ⚠️ Backwards Compatibility & Removed Functions
@@ -35,9 +32,7 @@ With the release of **Version 3.0.0** in April 2026, the library architecture ha
 **What does this mean for open issues?**
 
 * **Legacy Issues:** All issues reported before April 2026 refer to the outdated V2.x architecture. As these versions are no longer actively maintained, these issues have been closed and moved to the **"Legacy V1.x/V2.x"** milestone.
-
 * **A Fresh Start:** If you encounter a bug with the new version, please open a **new issue**.
-
 * **Prerequisite:** Ensure you are using the new object-oriented structure and that your problem is reproducible with the current V3.0.0 release.
 
 ## 🔌 Hardware Wiring
@@ -51,6 +46,23 @@ With the release of **Version 3.0.0** in April 2026, the library architecture ha
 | **MOSI** | Pin 11 | GPIO 23 | SPI Data In |
 | **CSN / SS** | Pin 10 | GPIO 5 | Chip Select |
 | **GDO0** | Pin 2 | GPIO 2 | Interrupt/Data Out |
+
+### 🔀 Custom Pin Configuration
+
+If you need to use different pins than the defaults listed above, you can reconfigure the SPI bus using the `setSpiPin()` function. 
+
+> ⚠️ **Important:** You must call `setSpiPin()` **before** calling `radio.Init()`.
+
+```cpp
+// Example for setting custom SPI pins
+radio.setSpiPin(SCK_PIN, MISO_PIN, MOSI_PIN, SS_PIN);
+radio.Init();
+```
+
+#### Platform Specifics:
+
+* **ESP32, ESP32-S2 & ESP32-S3:** Due to the ESP32's internal GPIO matrix, you can map the SPI bus to **almost any available GPIO**. Using this function is **mandatory** if you are using newer variants like the **ESP32-S2** or **ESP32-S3**, as their default hardware SPI pins differ significantly from the classic ESP32.
+* **Arduino / AVR & ARM Boards:** On classic 8-bit Arduinos (Uno, Nano, Mega) and most ARM-based boards, the hardware SPI lines (`SCK`, `MISO`, `MOSI`) are hardwired into the silicon and **cannot be changed**. On these platforms, you can only change the **SS / CS** (Chip Select) pin. If you pass different pins for SCK/MISO/MOSI on these boards, they will be ignored, or the driver might fall back to the hardware defaults.
 
 ## 🚀 Quick Start
 
